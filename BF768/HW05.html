@@ -1,0 +1,353 @@
+<head>
+  <meta name="turbolinks-cache-control" content="no-cache">
+</head>
+<html>
+<body style="background-color: #f9d2d2;">
+<style>
+.column {
+  float: left;
+  width: 33.33%;
+  padding: 0px;
+}
+
+/* Clearfix (clear floats) */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+</style>
+<html>
+<title>Shopping page</title>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style><b>
+body,h1 {font-family: "Raleway", Arial, sans-serif}
+h1 {letter-spacing: 6px}
+.w3-row-padding img {margin-bottom: 12px}
+</style></b>
+<!-- !PAGE CONTENT! -->
+<div class="w3-content" style="max-width:1500px"  margin: 0; >
+<div class="row">
+  <div class="column">
+    <img src="https://media.giphy.com/media/ZFzv8YDfU6OHeV8yQt/giphy.gif" style="width:100%" height =42%>
+  </div>
+  <div class="column">
+    <img src="https://scontent-lga3-1.xx.fbcdn.net/v/t1.0-9/41300499_307926023094412_809678953944973312_n.jpg?_nc_cat=109&_nc_sid=dd9801&_nc_oc=AQn6lXUFczP_hhwA0l4VQpzJrsDp_w-J3U67adHe95tWZ8xCobrLDiD438d5cZtVYotPiCkFu-3Nuh5YrwOxDiXJ&_nc_ht=scontent-lga3-1.xx&oh=656763681cf09a0e61a000763f333d4a&oe=5EBEF924" style="width:100%" height =42%>
+  </div>
+  <div class="column">
+     <img src="https://media.giphy.com/media/ZFzv8YDfU6OHeV8yQt/giphy.gif" style="width:100%" height =42%>
+  </div></div>
+<header class="w3-panel w3-center w3-opacity" style="padding:0px 0px">
+   <h1>Place your order!</h1>
+  <div class="w3-container w3-content w3-center w3-padding-64" style="background-color:#f0f0f0" style="max-width:800px">
+<style>
+            table, th, td {
+                 text-align:center;
+                 border-collapse: collapse;
+                 width: 35%;
+                 border: 1.5px solid black;
+                 padding: 2px;
+                 box-sizing: border-box;
+            }
+
+            tbody {
+                text-align:center;
+            }
+
+            div {
+                text-align:center;
+            }
+
+            form {
+                text-align:center;
+            }
+
+            table {
+                width: 400px;
+            }
+            
+            th {
+                text-align: center;
+            }
+            
+            td {
+                text-align: center;
+            }
+            
+            tr:nth-child {
+                text-align:center;
+                background-color: #f2f2f2;
+            }
+        </style>
+
+    <head>
+        <meta charset="utf-8" /> 
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+        
+    </head>
+    <body>       
+        <form id="one" onsubmit="return validateInput()">
+        <label for="category">Category:</label>
+        <select id="category">
+            <option value="*">- Select -</option>
+        </select>
+             
+        <label for="product">Product:</label>
+        <select id="product">
+            <option value="*">- Select -</option>
+        </select> 
+        <input   type="submit" id="submit" value="View">
+        </form>
+        
+        <div id="productdetails"> 
+        </div>
+
+        <br>
+        <form id="two" onsubmit="return validateInput2()">
+        <label hidden id="quan" for="quantity">Select quantity:</label>
+        <select hidden id="quantity">
+            <option value="*">- Select -</option>
+        </select>
+        <input hidden type="submit" id="submit2" value="Price of product">
+        </form>
+        <br>
+
+        <div id="price">
+        </div>
+        <button hidden id="cart">Add to Cart</button>
+        <br><br>
+        
+        <p hidden id="ordercost">Total order cost:</p>
+        <p hidden id="total">0</p>     
+
+        <div hidden id="cart_table">
+        <center><table id="pn"><tbody><tr><th>Product name</th><th>Quantity</th><th>Total Price</th></tr></tbody></table></center>
+        </div>
+        
+        <p hidden id="hidden"></p>
+        <br>
+        <form hidden id="three" onsubmit="return validateInput3()">
+        Customer Name: <input type="text" id="customer" name="customer">
+        <input type="submit" id="submit3" value="Place Order" >
+        </form>       
+        
+        <div id="pro">
+        <div>
+         <script type="text/javascript">
+        function validateInput() {
+                var product = document.getElementById('product').value;
+		            var category = document.getElementById('category').value;
+                          
+                if (category == "*") {
+                        alert("Please enter a Product category!");
+                        return false;
+                }
+                else if (product == "*"){
+                        alert("Please enter  Product!");
+                        return false;
+                }
+		           
+        }
+        function validateInput2(){ 
+          var quantity = document.getElementById('quantity').value;        
+          if (quantity == "*") {
+                        alert("Please enter a quantity!");
+                        return false;
+                }
+                 }
+        function validateInput3(){ 
+          var quantity = document.getElementById('customer').value;        
+          if (quantity == "") {
+                        alert("Please enter a your name!");
+                        return false;
+                }
+                 }
+        </script>
+        <script type="text/javascript">
+
+            $(document).ready(function(){
+                updateCategory();  
+                    
+                $('#category').on('change', function(){
+                    updateProduct();
+                });
+                
+                $("#one").on('submit', function(event){
+                    event.preventDefault();
+                    getInfo();
+                    getQuantity();
+                });
+		$("#product").on('change', function(){
+                    $('#submit').show();
+		});
+                $("#two").on('submit', function(event){
+                    event.preventDefault();
+                    getPrice();
+                })
+                $("#cart").click(function(){
+                    getCartTable();
+                })
+                $("#three").on('submit', function(event){
+                    event.preventDefault();
+                    $(".TextFieldSettings #three").unbind('change') 
+                    PlaceOrder();
+                })
+            });
+            
+            var updateCategory = function(){
+                
+                $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/details.py',
+                    type: 'get',
+                    data: {'table':'category'},
+                    success: function(response){
+                        var lines = response.trim().split("\n");
+                        lines.forEach(function(value){
+                            $("#category").append("<option value='"+value+"'>"+value+"</option>");
+                        });
+                    }
+                });
+            };
+            
+            var updateProduct = function(){
+               
+                category_name=$("#category").val();
+                $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/details.py',
+                    type: 'get',
+                    data: {'table':'product','category_name':category_name},
+                    success: function(response){
+                        $("#product").empty();
+                        $("#product").append("<option value='*'>- Select -</option>")
+
+                        var lines = response.trim().split("\n");
+                        lines.forEach(function(value){
+                         
+                            $("#product").append("<option value='"+value+"'>"+value+"</option>");
+                        });
+                    }
+                });
+                
+            };
+            
+            var getInfo = function(){
+                category_name=$("#category").val();
+                product_name=$("#product").val();
+                
+                $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/details.py',
+                    type: 'get',
+                    
+                    data: {'submit':'submit','product_name':product_name},
+                    success: function(response){
+                        //$('#quantity').empty();
+                        $("#productdetails").empty();
+                        $("#productdetails").append("<h3>Product Information</h3>");
+                        $("#productdetails").append("<b>Category: "+category_name+"</b><br>");
+                        $("#productdetails").append("<b>Product: "+product_name+"</b>");
+                        $("#productdetails").append("<center><table><tbody><tr><th>Product name</th><th>Number in Stock</th><th>Unit Price</th></tr></tbody></table></center>"); 
+                        var lines = response.trim().split("\n");
+                        lines.forEach(function(value){
+                            product1 = value.split("\t");
+                            $("#productdetails tbody").append("<tr><td>"+product1[0]+"</td><td>"+product1[1]+"</td><td>"+product1[2]+"</td></tr>");			    
+                        });
+                    }
+                });
+            };
+
+            var getQuantity = function(){
+                product_name=$("#product").val();
+                $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/details.py',
+                    type: 'get',
+                    data: {'submit':'submit','product_name':product_name},
+                    success: function(response){
+                        $('#quantity').empty();
+                        var lines = response.trim().split("\n");
+                        lines.forEach(function(value){
+                            product1 = value.split("\t");
+                            if (Number(product1[1])==0){
+                                alert("Out of Stock!");
+                                $('#quantity').hide();
+                                $('#quan').hide();
+                                $('#submit2').hide();
+                                $('#price').hide();
+                                $('#cart').hide();
+                                return false;
+                            } else {
+                                $('#quantity').append("<option value='*'>- Select -</option>");
+                                var i;
+                                for (i = 1; i <= Number(product1[1]); i++) {
+                                    $("#quantity").append("<option value="+i+">"+i+"</option>");
+                                $('#quantity').show();
+                                $('#quan').show();
+                                $('#submit2').show();
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+
+            var getPrice = function(){
+                $('#hidden').empty()
+                product_name=$("#product").val();
+                select_quantity=$("#quantity").val();
+                $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/details.py',
+                    type: 'get',
+                    data: {'submit':'submit2','product_name':product_name},
+                    success: function(response){
+                        $('#price').empty();
+                        var lines = response.trim().split("\n");
+                        lines.forEach(function(value){
+                            product1 = value.split("\t");
+                            $('#price').append("<p style='font-size:20px' >You select "+select_quantity+" "+product_name+
+                            ".The Total Price:"+Number(product1[2])*select_quantity+"</p>");
+                            $('#hidden').text(Number(product1[2])*select_quantity);
+                        });
+                        $('#price').show();
+                        $('#cart').show();
+                    }
+                });
+            };
+
+            var getCartTable = function(){
+                $('#cart_table').show();
+                $('#three').show();
+                product_name=$("#product").val();
+                select_quantity=$("#quantity").val();
+                total_price=$("#hidden").text();
+                $('#ordercost').show();
+                $('#total').text(Number($('#total').text())+Number(total_price));
+                $('#total').show();
+                $("#cart_table tbody").prepend("<tr><td>"+product_name+"</td><td>"+select_quantity+"</td><td>"+total_price+"</td></tr>");
+            };
+           
+             var PlaceOrder = function(){
+                customer_name = $("#customer").val();
+                $('#pn tr').each(function() {
+                    var record = $(this).children();
+                    var prod = record.eq(0).text();
+                    var quant = record.eq(1).text();
+                    $.ajax({
+                    url: 'https://bioed.bu.edu/cgi-bin/students_20/glohani/po.py',
+                    type: 'get',
+                    data: {'submit':'submit3','product':prod,'quantity':quant,'customer':customer_name},
+                    success: function(response){
+                         $('#pro').append("<p>"+response+"</p")
+                    }    
+                 });
+                });
+                
+            };
+
+        </script>
+    </body>
+</html>
+
