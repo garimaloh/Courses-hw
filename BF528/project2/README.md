@@ -1,17 +1,16 @@
-# Project Description
+# Analyst Section Content:
 
-This repository contains files related to the project "Transcriptional Profile of Mammalian Cardiac Regeneration with mRNA seq" (https://bf528.readthedocs.io/en/latest/content/projects/project_2_rnaseq_1/project_2_rnaseq_1.html)
+•	Project2_Analyst.R - contains code for Analyst section of the Project
 
-# Contributors
+•	all_fold_change.pdf - contains histogram of fold_change for all genes in pdf
 
-Divya (Programmer), Garima (Analyst), Marlene (Data Curator), Xudong (Biologist)
+•	sig_fold_change.pdf- contains histogram of fold_change for significant genes in pdf
 
-# Repository Contents
+•	downregulated_genes.csv- contains the list of downregulated genes based on log2.fold_change<0
 
-Contents of the repository are given below:
+•	upregulated_genes.csv-contains the list of upregulated genes based on log2.fold_change>0
 
-Analyst folder: contains Analyst results for the project.
+•	up_cluster.csv – contains top DAVID cluster for up regulated genes
 
-Programmer folder: contains Programmer scripts 
+•	down_cluster.csv- contains top DAVID cluster for downregulated genes
 
-Data Folder : Contains the data that was used for downstream analysis.
