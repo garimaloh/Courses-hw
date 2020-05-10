@@ -1,0 +1,137 @@
+---
+title: "Project1_Analyst_Xudong"
+output: html_notebook
+---
+
+
+## Noise filtering 
+
+# Filter 1
+select effective expressed genes
+```{r}
+# set work directory
+setwd("/projectnb/bf528/users/group1/project1/samples")
+# load the data from 3.5
+data3.5 <- read.csv("combatNorm.csv",sep = ",",header = TRUE,row.names = 1)
+# check the number of probes
+print(c("Total probes:",dim(data3.5)[1]))
+# filter 1:
+filter1 = data3.5 > log(15,2)
+data4.1 <- data3.5[rowSums(filter1) > .2*134,]
+# check how many genes left 
+print(c("Number of probes left after filter 1:",dim(data4.1)[1]))
+```
+
+# Filter 2
+select genes with significant variance
+```{r}
+# computer the variation of each gene and find the median
+each_gene_var <- apply(data4.1,MARGIN = 1,var) 
+all_var_median <- median(each_gene_var)
+# select the genes that pass one tail chisq 
+filter2 <- 133*(each_gene_var/all_var_median)>qchisq(0.99,133)
+data4.2 <- data4.1[filter2,]
+# check how many genes left
+print(c("Number of probes left after filter2:",dim(data4.2)[1]))
+# save the data for the biologist
+write.csv(data4.2,sep = ",",file = "data4_5.csv")
+
+```
+
+# Filter 3
+select genes with higher CV
+```{r}
+# compute the mean and standard deviation for each gene
+data4.2_mean <- apply(data4.2,MARGIN = 1,mean)
+data4.2_sd <- apply(data4.2,MARGIN = 1,sd)
+# compute the coeffitient of variation
+data4.2_cv <- data4.2_sd/data4.2_mean
+data4.3 <- data4.2[data4.2_cv>0.186,]
+# check how many genes left after 3 filters
+print(c("Number of probes left after filter3:", dim(data4.3)[1]))
+# save the data for further analysis
+write.csv(data4.3,sep=",",file = "data4_4.csv")
+data4.4 <- read.csv("data4_4.csv",header = TRUE, sep = ",",row.names = 1)
+
+```
+
+
+## Hierarchical Clustering
+# Cluster Plot
+```{r}
+clusters <- hclust(dist(t(data4.4)))
+# plot the dendrogram
+plot(clusters,labels = FALSE,main = "",sub="")
+# add a line can separate the sample into two clusters
+abline(h=100,lty=2)
+```
+
+# Cut tree 
+```{r}
+clusterCut <- cutree(clusters, k = 2, h = 100)
+# summarize how many samples in each cluster
+print(table(clusterCut))  
+```
+
+# Heat map
+```{r}
+# create a new vector for separating the C3 and C4 by colors
+colorow <- replicate(n=134,NA)
+metadata <- read.csv("/project/bf528/project_1/doc/proj_metadata.csv")
+# label C3 as red, and C4 as blue
+colorow <- ifelse(metadata$cit.coloncancermolecularsubtype=="C3","red","blue")
+heatmap(as.matrix(data4.4),ColSideColors = colorow,labRow = FALSE,labCol = FALSE)
+legend(x=99,y=142,legend=c("C3","C4"),fill = c("red","blue"))
+```
+
+# Sumarize the cluster
+```{r}
+# summarize the C3 and C4 subtype and each cluster
+print(table(metadata$cit.coloncancermolecularsubtype))
+# perform a fisher test 
+fish <- fisher.test(matrix(c(0,75,57,2),byrow = T, nrow = 2))
+print(c("fisher test:",fish))
+```
+
+# T test and q value computation
+```{r}
+# compute the t-test for each gene between two clusters  
+t_data <- apply(as.matrix(data4.4),1,function(x) t.test(x=x[clusterCut==1],y=x[clusterCut==2]))
+# extract the p_val and test statistics
+p_value <- sapply(t_data,function(x) x$p.value)
+t_stats <- sapply(t_data,function(x) x$statistic)
+# compute the q value according to p value
+adjust_p <- p.adjust(p_value,method = "fdr")
+# build a new dataframe with probeset ID, t stas, p val, q val.
+data5.4 <- data.frame("Probeset_ID" = c(row.names(data4.4)),
+                      t_stats,p_value,adjust_p)
+# save the data in a csv file
+write.csv(data5.4,sep = ",",row.names = FALSE,file = "data5_4.csv")
+```
+
+# find differentially genes with q value less than 0.05
+```{r}
+# select the gene with q value less than 0.05
+diff_gene <- data5.4$Probeset_ID[data5.4$adjust_p<0.05]
+# check how many genes can pass screen
+print(c("Number of probes left with q val<0.05:",length(diff_gene)))
+```
+
+## Do the same test for biologist
+```{r}
+data4.5 <- read.csv("data4_5.csv",row.names = 1,sep = ",",header = T)
+t_data_bio <- apply(as.matrix(data4.5),1,function(x) t.test(x=x[clusterCut==1],y=x[clusterCut==2]))
+bio_pvalue <- sapply(t_data_bio,function(x) x$p.value)
+bio_t_stats <- sapply(t_data_bio, function(x) x$statistic)
+bio_adjustp <- p.adjust(bio_pvalue,method = "fdr")
+# create a new dataframe with probeset_ID, t stats, p val, q val
+data5.6 <- data.frame("Probeset_ID"=c(row.names(data4.5)),"t_stats"=bio_t_stats,
+                      "p_value"=bio_pvalue,"q_value"=bio_adjustp)
+# select the genes with q value less than 0.05
+data5.6 <- data5.6[data5.6$q_value<0.05,]
+# check how many genes can pass the filter
+print(c("Number of probes left:",dim(data5.6)[1]))
+# save the data 
+write.csv(data5.6,row.names = F,file = "data5_6.csv",sep=",")
+```
+

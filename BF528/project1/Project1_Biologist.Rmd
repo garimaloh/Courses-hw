@@ -1,0 +1,255 @@
+---
+title: "BF 528 Project 1: Biologist"
+author: "Divya Venkatraman"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. The differential expression matrix you received has only probeset IDs, and not gene symbols. Using the select() function of the bioconductor package hgu133plus2.db, map the probeset IDs to gene symbols by specifying the appropriate key and column arguments. Some probeset IDs map to the same gene symbol, so reason about and pick a rationale for choosing which probeset ID to use as representative. Add an additional column to the differential expression results that contains one symbol for each probeset ID.
+
+```{r genesymbol, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(hgu133plus2.db)
+library(affy)
+
+differential_expression_results <- read_csv("~/BF528/project-1-group-1-master/data5_4.csv", col_names = c('PROBEID','t','p','padj'))
+
+differential_expression_results <- differential_expression_results[-1,]
+differential_expression_results <- differential_expression_results %>%
+  mutate(t = as.numeric(t), p = as.numeric(p), padj = as.numeric(padj))
+
+symbol <- AnnotationDbi::select(hgu133plus2.db , differential_expression_results$PROBEID, c('SYMBOL'))
+
+head(differential_expression_results)
+head(symbol)
+
+```
+
+- Condense the gene symbols that map to the same probeset id with a | to separate them
+
+```{r symbolcondense, message=FALSE,warning=FALSE}
+
+#function to collapse the input into a string with | delimiter
+collapser <- function(x){
+  x %>% unique %>% sort %>% paste(collapse = "|")
+}
+
+#Combining the multiple symbols that map to the same probeset id
+symbol <- symbol  %>% 
+  group_by(PROBEID) %>%
+  summarise_each(funs(collapser)) %>%
+  ungroup
+
+
+head(symbol)
+
+#merging symbols to the data 
+diff <- merge(differential_expression_results,symbol , on = 'PROBEID')
+
+
+#remove rows which dont map to any gene symbol
+diff <- diff[!(is.na(diff$SYMBOL) | diff$SYMBOL==""), ]
+head(diff)
+```
+
+
+- Find most significant probeset ID for each symbol that maps to multiple probes.
+
+```{r iqr, message=FALSE, warning=FALSE}
+#finding all the symbols which map to 2 or more probesets
+counts <- diff %>%
+  group_by(SYMBOL) %>%
+  count() %>%
+  filter(n >= 2)
+
+counts[order(counts$n),]
+
+diffexp <- data.frame(PROBEID = character(),
+                   t = numeric(),
+                   p = numeric(),
+                   padj = numeric(),
+                   SYMBOL = character())
+
+# keeping rows with least padj value for each repeated symbol. Keeping most significant probeset ID for each.
+for (sym in counts$SYMBOL){
+  x <- diff[diff$SYMBOL == sym,]
+  x <- x[x$padj == min(x$padj),]
+  diff <- diff[!diff$SYMBOL == sym,]
+  diffexp <- rbind(diffexp,x) 
+}
+
+diff <- rbind(diff,diffexp)
+
+```
+
+3. Using the differential expression results from your comparisons in 5.6 that were calculated using the Chi-squared filtered results from 4.5, select the top 1000 up- and down-regulated (i.e. positive and negative log2 fold change, respectively) genes, irrespective of significance. Create a table in your report with the top 10 of these up- and down-regulated genes, including t-statistic, p-value, and adjusted p-value.
+
+```{r top1000, message=FALSE, warning=FALSE}
+# using the differential expression results from 5.4 to get the top 1000 genes that will be used in further analysis
+
+diff <- diff[order(diff$t, decreasing = TRUE),]
+head(diff)
+
+#taking the top 1000 genes , i.e, the top 500 positive and top 500 negative differentially expressed genes based on t-statistic value
+top1000_up <- head(diff, n=1000)
+top1000_down <- tail(diff, n=1000)
+head(top1000_up)
+head(top1000_down)
+
+#get genes that are not in top 1000 differentially expressed
+notde_up <- subset(diff, !diff$SYMBOL %in% top1000_up$SYMBOL)
+notde_down <- subset(diff, !diff$SYMBOL %in% top1000_down$SYMBOL)
+
+# Getting top 1000 from the results of 5.6 
+diff5.6 <- read_csv("~/BF528/project-1-group-1-master/data5_6.csv", col_names = c('PROBEID','t','p','padj'))
+diff5.6 <- diff5.6[-1,]
+diff5.6 <- diff5.6 %>%
+  mutate(t = as.numeric(t), p = as.numeric(p), padj = as.numeric(padj))
+
+diff5.6 <- diff5.6[order(diff5.6$t, decreasing = TRUE),]
+top1000_5.6_up <- head(diff5.6, n=1000)
+top1000_5.6_down <- tail(diff5.6, n=1000)
+head(top1000_5.6_up)
+
+write.csv(top1000_up, "top1000_5_4_up.csv", row.names = FALSE)
+write.csv(top1000_down, "top1000_5_4_down.csv", row.names = FALSE)
+write.csv(top1000_5.6_up, "top1000_5_6_up.csv", row.names = FALSE)
+write.csv(top1000_5.6_down, "top1000_5_6_down.csv", row.names = FALSE)
+
+```
+
+
+
+4. We will use the GSEABase bioconductor package to load the genesets we downloaded as a GeneSetCollection. Read the package documentation to understand how to use the package, and find the function that is used to read in GMT formatted files. How many gene sets are there in each of the collections we are using?
+
+- GO Collection. length(go) gives us the number of gene sets in the collection.
+
+```{r go, message = FALSE, warning = FALSE}
+library(GSEABase)
+go <- getGmt('~/BF528/Project 1/c5.all.v7.0.symbols.gmt',collectionType = BroadCollection(category = 'c5'), geneIdType = SymbolIdentifier())
+length(go)
+```
+
+- KEGG Collection
+
+```{r kegg, message = FALSE, warning = FALSE}
+kegg <- getGmt('~/BF528/Project 1/c2.cp.kegg.v7.0.symbols.gmt',collectionType = BroadCollection(category = 'c2'), geneIdType = SymbolIdentifier())
+length(kegg)
+```
+
+- Hallmark Collection
+
+```{r hallmark}
+hallmark <- getGmt('~/BF528/Project 1/h.all.v7.0.symbols.gmt',collectionType = BroadCollection(), geneIdType = SymbolIdentifier())
+length(hallmark)
+```
+
+5. Use the fisher.test function to compute hypergeometric statistics and p-values comparing overlap for each gene set and each gene list from 5.4. You might consider writing a function that accepts a gene list and a single gene set to test your code. You will need to create a contingency table for each calculation to pass as the argument to fisher.test.
+
+```{r fisher}
+
+#function to create contingency table for each gene set comparison
+fishertable <- function(genelist,geneset, notdelist)
+{
+  #number of diff. expressed genes in the gene set
+  diffexp.ingeneset <- length(intersect(genelist,geneset))
+  #number of diff. expressed genes not in the gene set
+  diffexp.notgeneset <- length(genelist)-diffexp.ingeneset
+  #number of not diff. expressed genes in the gene set
+  notde.ingeneset <- length(intersect(notdelist,geneset))
+  #number of not diff. expressed genes not in the gene set
+  notde.notgeneset <- length(notdelist) - notde.ingeneset
+  
+  return(c(diffexp.ingeneset,diffexp.notgeneset,notde.ingeneset,notde.notgeneset))
+}
+
+# create a data frama to store results of each fisher test
+go.results <- data.frame(genesetname = character(),
+                             p_value = numeric(),
+                             estimate = numeric(),
+                            diff = character(),
+                             stringsAsFactors = FALSE)
+
+kegg.results <- data.frame(genesetname = character(),
+                             p_value = numeric(),
+                             estimate = numeric(),
+                           diff = character(),
+                             stringsAsFactors = FALSE)
+
+hallmark.results <- data.frame(genesetname = character(),
+                             p_value = numeric(),
+                             estimate = numeric(),
+                             diff = character(),
+                             stringsAsFactors = FALSE)
+
+
+#for each collection, store the fisher test results of each gene set comparison in a separate data frame
+for (i in 1:length(hallmark))
+{
+  g <- geneIds(hallmark[i])
+  f <- fishertable(top1000_up$SYMBOL,g[[names(g)]],notde_up$SYMBOL)
+  fd <- fishertable(top1000_down$SYMBOL,g[[names(g)]],notde_down$SYMBOL)
+  x <- fisher.test(matrix(f,nrow=2))
+  xd <- fisher.test(matrix(fd,nrow=2))
+  hallmark.results[nrow(hallmark.results)+1,] <- c(names(g),x$p.value, x$estimate,'UP')
+  hallmark.results[nrow(hallmark.results)+1,] <- c(names(g),xd$p.value, xd$estimate,'DOWN')
+
+}
+
+for (i in 1:length(go))
+{
+  g <- geneIds(go[i])
+  f <- fishertable(top1000_up$SYMBOL,g[[names(g)]],notde_up$SYMBOL)
+  fd <- fishertable(top1000_down$SYMBOL,g[[names(g)]],notde_down$SYMBOL)
+  x <- fisher.test(matrix(f,nrow=2))
+  xd <- fisher.test(matrix(fd,nrow=2))
+  go.results[nrow(go.results)+1,] <- c(names(g),x$p.value, x$estimate,'UP')
+  go.results[nrow(go.results)+1,] <- c(names(g),xd$p.value, xd$estimate,'DOWN')
+
+}
+
+for (i in 1:length(kegg))
+{
+  g <- geneIds(kegg[i])
+  f <- fishertable(top1000_up$SYMBOL,g[[names(g)]],notde_up$SYMBOL)
+  fd <- fishertable(top1000_down$SYMBOL,g[[names(g)]],notde_down$SYMBOL)
+  x <- fisher.test(matrix(f,nrow=2))
+  xd <- fisher.test(matrix(fd,nrow=2))
+  kegg.results[nrow(kegg.results)+1,] <- c(names(g),x$p.value, x$estimate,'UP')
+  kegg.results[nrow(kegg.results)+1,] <- c(names(g),xd$p.value, xd$estimate,'DOWN')
+
+}
+
+#convert the pvalue and estimate columns to numeric
+hallmark.results <- hallmark.results %>%
+  mutate(p_value = as.numeric(p_value), estimate = as.numeric(estimate))
+
+go.results <- go.results %>%
+  mutate(p_value = as.numeric(p_value), estimate = as.numeric(estimate))
+
+kegg.results <- kegg.results %>%
+  mutate(p_value = as.numeric(p_value), estimate = as.numeric(estimate))
+
+
+```
+
+
+6. Create a table (dataframe) of statistics for each comparison from 6.2, including gene set name, statistic estimate and p-value. Adjust the p-values for multiple hypotheses using the Benjamini-Hochberg (FDR) procedure and append this adjusted p-value column to the data frame. Finally, sort each dataframe by nominal p-value and report the top three results for each in a table in your report. Compare the enriched gene sets you found with those reported in Figure 2 of the paper.
+
+```{r bhadjust}
+
+#adjust the pvalue using Benjamini Hochberg method
+hallmark.results$bh <- p.adjust(hallmark.results$p_value, method = "BH", n = length(hallmark.results$p_value))
+write.csv(hallmark.results, "fisher_hallmark.csv", row.names = FALSE)
+
+kegg.results$bh <- p.adjust(kegg.results$p_value, method = "BH", n = length(kegg.results$p_value))
+write.csv(kegg.results, "fisher_kegg.csv", row.names = FALSE)
+
+go.results$bh <- p.adjust(go.results$p_value, method = "BH" , n = length(go.results$p_value))
+write.csv(go.results, "fisher_go.csv", row.names = FALSE)
+
+```
+

@@ -1,0 +1,101 @@
+  ---
+title: "Project1 Programming Code"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+
+Installating and loading of Libraries
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+  
+
+BiocManager::install("affy")
+BiocManager::install("affyPLM")
+BiocManager::install("sva")
+BiocManager::install("AnnotationDbi")
+BiocManager::install("hgu133plus2.db")
+install.packages("tidyverse")
+install.packages("ggplot2")
+
+library(affy)
+library(affyPLM)
+library(AnnotationDbi)
+library(hgu133plus2.db)
+library(sva)
+
+library(ggplot2)
+
+```
+
+Normalizing the data
+```{r}
+directoryy <- '/projectnb/bf528/users/group1/project1/samples'
+affyData = ReadAffy(celfile.path=directoryy)
+normdata <- rma(affyData)
+```
+
+RLE and NUSE stats
+```{r}
+plm <- fitPLM(affyData,normalize =TRUE, background = TRUE)
+
+rlestats <- RLE(plm,type="stats" )
+rless = rlestats[1,]
+hist(rless, col="red",nclass=8,main="Histogram of median RLE",xlab="median RLE")
+
+nusestats <- NUSE(plm,type="stats")
+nuse_means <- nusestats [1,]
+hist(nuse_means, col="blue",nclass=8,main="Histogram of median RLE",xlab="median RLE")
+
+```
+
+Batch effects Correction
+```{r}
+metadata <- read.csv("/project/bf528/project_1/doc/proj_metadata.csv")
+matrix_meta <- exprs(normdata)
+write.csv(matrix_meta, 'normdata.csv')
+normss <- read.csv("normdata.csv")
+model <- model.matrix(~normalizationcombatmod, data = metadata)
+combatnormMatrix <- ComBat(dat = matrix_meta, batch = metadata$normalizationcombatbatch, mod = model)
+write.csv(combatnormMatrix,'combatNorm.csv')
+```
+
+PCA
+```{r}
+transData <-t(combatnormMatrix)
+transScale <-scale(transData, center=TRUE,scale=TRUE)
+scaled <-t(transScale)
+pcaA <-prcomp(scaled,scale=FALSE,center = FALSE)
+summary(pcaA)
+pcaA$rotation
+
+pcaRotation <- as.data.frame(pcaA$rotation)
+ggplot(data = pcaRotation, mapping = aes(x = PC1, y = PC2)) +
+  geom_point()+
+  theme_bw() +
+  labs(title = 'PCA plot', x= 'PC1 11.47%', y='PC2 8.409%')
+```
+
+ Outliers present in PCA1 and 2 that are greater than 3 STDs
+ 
+```{r}
+
+ggplot(data = pcaRotation, mapping = aes( y = PC2)) +
+  geom_boxplot()+
+  theme_bw() +
+  labs(title = 'PCA2 Boxplot')
+
+ggplot(data = pcaRotation, mapping = aes( y = PC1)) +
+  geom_boxplot()+
+  theme_bw() +
+  labs(title = 'PCA1 Boxplot')
+
+
+id <- which(!(pcaRotation$PC1 > mean(pcaRotation$PC1) + 3*sd(pcaRotation$PC1) | pcaRotation$PC1 < mean(pcaRotation$PC1) - 3*sd(pcaRotation$PC1) |
+                      pcaRotation$PC2 > mean(pcaRotation$PC2) + 3*sd(pcaRotation$PC2)| pcaRotation$PC2 < mean(pcaRotation$PC2) - 3*sd(pcaRotation$PC2)))
+CombatdataFil <- scaled[,id]
+dim(CombatdataFil)
+```
+ 
