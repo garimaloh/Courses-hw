@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#$ -P bf528
+#$ -cwd
+
+source /etc/bashrc
+
+module load python2
+module load multiqc
+
+multiqc /projectnb2/bf528/users/group1/sample1/

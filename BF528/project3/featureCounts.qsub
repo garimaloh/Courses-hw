@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#$ -P bf528
+#$ -cwd
+#$ -pe omp 16
+
+source /etc/bashrc
+
+module load subread
+
+GTF=/project/bf528/project_3/reference/rn4_refGene_20180308.gtf
+
+for file in /projectnb2/bf528/users/group1/project3/Data_Curator/Star_output/*Aligned.sortedByCoord.out.bam
+
+ do
+  f=$(basename "$file")
+  f=${f:0:10} 
+  echo $f
+  OUT=/projectnb2/bf528/users/group1/sample1/$f.txt
+  featureCounts -T 16 -a $GTF -o $OUT $file
+  
+  
+ done;
